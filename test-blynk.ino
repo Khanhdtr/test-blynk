@@ -92,10 +92,10 @@ void setup()
 
 void loop()
 {
-  Serial_Manager();
+ // Serial_Manager();
   //Blynk.run();
-  System_Manager();
-  FeedBack_Manager();
+  //System_Manager();
+ // FeedBack_Manager();
   Serial.println("Wrong str");
 
   
