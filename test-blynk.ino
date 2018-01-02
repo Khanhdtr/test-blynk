@@ -2,31 +2,34 @@
 
 #include <ESP8266WiFi.h>
 #include <BlynkSimpleEsp8266.h>
-//#include <SoftwareSerial.h> 
+#include <SoftwareSerial.h> 
 
-#define D0    16;
-#define D1    5;
-#define D2    4;
-#define D3    0;
-#define D4    2;
-#define D5    14;
-#define D6    12;
-#define D7    13;
+#define LED_STT    16         //led on board
+
+
+#define VI      5      //D1
+#define VO      4      //D2
+#define PB      0      //D3
+#define LIGHT   2      //D4
+#define PA      14     //5
+#define PO      12     //D6
+#define FAN     13    //D7
+/*
 #define D8    15;
 #define D9    3;
 #define D10   1;
-
+*/
 struct System
 {
   int cnt= 0;
   int value;
   int Status;
   String Buff_Command;
-  String Buffer;
 };
 struct Blynk_button
 { 
-int Pressed  ;
+int Pressed =0 ;
+int Wait_Press = 0;
 int Press ;
 int Status;
 String Buff_Command;
@@ -38,6 +41,8 @@ struct Blynk_button Valve;
 struct Blynk_button Fan;
 struct Blynk_button PumpB;
 
+struct Blynk_button VI_F;
+struct Blynk_button FAN_F;
 struct System LEDSTT;
 struct System SYSTEM;
 struct System WTemp;
@@ -62,39 +67,38 @@ char Comand_Light1[20] =   "Light OFF";
 char Comand_Valve_I[20] = "Valve ON";
 char Comand_Valve_I1[20] = "Valve OFF";
 
-#define Key 15
+
 char auth[] = "84417ea530b94d92bc77cf07372b8299";    //AuthToken copy ở Blynk Project
-char ssid[] = "boiboi";//"DCI Vietnam";//"boiboi"/;  //Tên wifi
-char pass[] = "06060606";//dci@vietnam";//"06060606";     //Mật khẩu wifi
+char ssid[] = "boiboi";//"boiboi"/;  //Tên wifi
+char pass[] = "06060606";//"06060606";     //Mật khẩu wifi
 //Flash D3 
 char Buff[100]= "12hgj2k31k2jk3k1j23k";
 //WidgetLCD lcd(V3);
-
+long lastDebounceTime = 0;  
+long debounceDelay = 50;
 void setup()
 {
   Serial.begin(115200);
   Blynk.begin(auth, ssid, pass); 
-  pinMode(16, OUTPUT);  //led onboard  16 D0 
-  pinMode(19, INPUT);
-
+  pinMode(LED_STT, OUTPUT);  //led onboard  16 D0 
+  pinMode(LIGHT, INPUT);
+  pinMode(VI, INPUT);
+  pinMode(VO, INPUT);
+  pinMode(PA, INPUT);
+  pinMode(PB, INPUT);
+  pinMode(PO, INPUT);
+  pinMode(FAN,INPUT);
 }
 
 void loop()
 {
   Serial_Manager();
-  Blynk.run();
+  //Blynk.run();
   System_Manager();
- /*
-  if(digitalRead(Key))
-  {   
-   LEDSTT.Status = !LEDSTT.Status;
-  }
-   
-   if(LEDSTT.Status)
-   digitalWrite(16,LOW);
-   else
-   digitalWrite(16,HIGH);
-  */
+  FeedBack_Manager();
+  Serial.println("Wrong str");
+
+  
 }
 
 void Serial_Manager()
@@ -103,15 +107,14 @@ void Serial_Manager()
   if(Serial.available())
    {
      SYSTEM.Buff_Command =   Serial.readStringUntil('\n');
-     SYSTEM.Buffer = SYSTEM.Buff_Command.substring(0,3);
      ////////////////////////V1////////////////////////////
-     if(SYSTEM.Buffer=="hu:")
+     if(SYSTEM.Buff_Command.substring(0,3)=="hu:")
       {  
           Serial.print(SYSTEM.Buff_Command);
           Hum.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
           Hum.Buff_Command+="%               ";
       }
-      else if(SYSTEM.Buffer=="wl:")
+      else if(SYSTEM.Buff_Command.substring(0,3)=="wl:")
       {
         Serial.print(SYSTEM.Buff_Command);
         Wl.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
@@ -119,13 +122,13 @@ void Serial_Manager()
       }
       /////////////////////////////////////////////////////
       ////////////////////////V0////////////////////////////
-      else if(SYSTEM.Buffer=="wt:")
+      else if(SYSTEM.Buff_Command.substring(0,3)=="wt:")
       {
         Serial.print(SYSTEM.Buff_Command);
         WTemp.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
         WTemp.Buff_Command+="*C               ";
       }
-      else if(SYSTEM.Buffer=="at:")
+      else if(SYSTEM.Buff_Command.substring(0,3)=="at:")
       {
         Serial.print(SYSTEM.Buff_Command);
         Atp.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
@@ -133,20 +136,20 @@ void Serial_Manager()
       }
       /////////////////////////////////////////////////////
       ////////////////////////V2////////////////////////////
-      else if(SYSTEM.Buffer=="bh:")
+      else if(SYSTEM.Buff_Command.substring(0,3)=="bh:")
       {
         Serial.print(SYSTEM.Buff_Command);
         Bh.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
         Bh.Buff_Command+="Lux               ";
       }
-      else if(SYSTEM.Buffer=="ec:")
+      else if(SYSTEM.Buff_Command.substring(0,3)=="ec:")
       {
         Serial.print(SYSTEM.Buff_Command);
         Ec.Buff_Command = SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length());
         Ec.Buff_Command += "PPM";
       }
       //////////////////////////////////////////////////////
-     else if(SYSTEM.Buffer=="mo:")
+     else if(SYSTEM.Buff_Command.substring(0,3)=="mo:")
      {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -155,7 +158,7 @@ void Serial_Manager()
           Mode.Buff_Command = "Manual";
  
      }
-     else if(SYSTEM.Buffer=="fa:")
+     else if(SYSTEM.Buff_Command.substring(0,3)=="fa:")
      {
        Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -163,7 +166,7 @@ void Serial_Manager()
         else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
           Fan.Buff_Command = "Off";
      }
-     else if(SYSTEM.Buffer=="lt:")
+     else if(SYSTEM.Buff_Command.substring(0,3)=="lt:")
      {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -171,7 +174,7 @@ void Serial_Manager()
         else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
           Light.Buff_Command = "Off";
      }
-     else if(SYSTEM.Buffer=="vi:")
+     else if(SYSTEM.Buff_Command.substring(0,3)=="vi:")
      {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -179,7 +182,7 @@ void Serial_Manager()
         else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
           Valve.Buff_Command = "Off";
     }
-    else if(SYSTEM.Buffer=="pa:")
+    else if(SYSTEM.Buff_Command.substring(0,3)=="pa:")
     {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -187,7 +190,7 @@ void Serial_Manager()
         else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
           PumpA.Buff_Command = "Off";
     }
-    else if(SYSTEM.Buffer=="pb:")
+    else if(SYSTEM.Buff_Command.substring(0,3)=="pb:")
     {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
@@ -207,40 +210,29 @@ void Serial_Manager()
       Blynk.virtualWrite(V0, WTemp_Atp.Buff_Command);
       Blynk.virtualWrite(V2, Bh_Ec.Buff_Command);
       Blynk.virtualWrite(V3, Mode_OUT.Buff_Command);
-/////////////////////print LCD//////////////////////////////
-  //    lcd_Manager();
- //     lcd.print(0,0, Mode.Buff_Command);
-   //   lcd.print(8,0, Fan.Buff_Command);
-     //lcd.print(1,0, Valve.Buff_Command);
-      //lcd.print(1,8, Light.Buff_Command);
+
    } 
 }
-/*
-void lcd_Manager()
+
+void FeedBack_Manager()
 {
-     lcd.clear ();
-      if(Mode_OUT.Status == 1)
-        lcd.print(0,0,Comand_Mode);
-      else if( Mode_OUT.Status == 0)
-        lcd.print(0,0,Comand_Mode1);
-        
-      if(Fan_OUT.Status == 1)
-        lcd.print(8,0,Comand_Fan);
-      else if( Fan_OUT.Status == 0)
-        lcd.print(8,0,Comand_Fan1);
-        
-      if(Light_OUT.Status == 1)
-        lcd.print(0,1,Comand_Light);
-      else if(Light_OUT.Status == 0)
-        lcd.print(0,1,Comand_Light1);
-        
-      if(Valve_OUT.Status == 1)
-        lcd.print(8,1,Comand_Valve_I);
-      else if(Valve_OUT.Status == 0)
-        lcd.print(8,1,Comand_Valve_I1);
   
-}
-*/
+   FAN_F.Wait_Press = digitalRead(FAN); //Press switch Mode
+   if(FAN_F.Wait_Press==0 && FAN_F.Pressed ==0)
+   {
+     Serial.print("Fan Off\0");
+     digitalWrite(LED_STT, 0);
+     FAN_F.Pressed = 1;
+   }
+   else if(FAN_F.Wait_Press==1&&FAN_F.Pressed ==1)
+   {
+     Serial.print("Fan On\0");
+     digitalWrite(LED_STT, 1);
+     FAN_F.Pressed = 0;
+   }
+}  
+
+
 //////////////////////////////// Manager button from app Blynk/////////////////////////
 void System_Manager()
 {
@@ -274,6 +266,7 @@ void System_Manager()
     Serial.print("Fan:Switch\0");
     Fan.Status = 0;
   }
+
 }
 ///////////////////////////////////////////////////////////////////////////////
 //////////////////////////////Get button from app Blynk////////////////////////
