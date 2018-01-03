@@ -24,7 +24,7 @@ struct System
   int cnt= 0;
   int value;
   int Status;
-  String Buff_Command;
+  String Buff_Command = "0";
 };
 struct Blynk_button
 { 
@@ -41,8 +41,15 @@ struct Blynk_button Valve;
 struct Blynk_button Fan;
 struct Blynk_button PumpB;
 
-struct Blynk_button VI_F;
+
 struct Blynk_button FAN_F;
+struct Blynk_button VI_F;
+struct Blynk_button VO_F;
+struct Blynk_button PO_F;
+struct Blynk_button PA_F;
+struct Blynk_button PB_F;
+struct Blynk_button LIGHT_F;
+
 struct System LEDSTT;
 struct System SYSTEM;
 struct System WTemp;
@@ -69,8 +76,8 @@ char Comand_Valve_I1[20] = "Valve OFF";
 
 
 char auth[] = "84417ea530b94d92bc77cf07372b8299";    //AuthToken copy ở Blynk Project
-char ssid[] = "boiboi";//"boiboi"/;  //Tên wifi
-char pass[] = "06060606";//"06060606";     //Mật khẩu wifi
+char ssid[] = "DCI Vietnam";//"boiboi"/;  //Tên wifi
+char pass[] = "dci@vietnam";//"06060606";     //Mật khẩu wifi
 //Flash D3 
 char Buff[100]= "12hgj2k31k2jk3k1j23k";
 //WidgetLCD lcd(V3);
@@ -92,12 +99,12 @@ void setup()
 
 void loop()
 {
- // Serial_Manager();
-  //Blynk.run();
-  //System_Manager();
- // FeedBack_Manager();
-  Serial.println("Wrong str");
-
+  Serial_Manager();
+  Blynk.run();
+  System_Manager();
+  FeedBack_Manager();
+  //Serial.println("Wrong str");
+  // digitalWrite(LED_STT, 1);
   
 }
 
@@ -216,23 +223,85 @@ void Serial_Manager()
 
 void FeedBack_Manager()
 {
-  
+////////////////////Read feedback Fan////////////////////  
    FAN_F.Wait_Press = digitalRead(FAN); //Press switch Mode
-   if(FAN_F.Wait_Press==0 && FAN_F.Pressed ==0)
-   {
+   if(FAN_F.Wait_Press==0 && FAN_F.Pressed ==0){
      Serial.print("Fan Off\0");
-     digitalWrite(LED_STT, 0);
      FAN_F.Pressed = 1;
    }
-   else if(FAN_F.Wait_Press==1&&FAN_F.Pressed ==1)
-   {
-     Serial.print("Fan On\0");
-     digitalWrite(LED_STT, 1);
+   else if(FAN_F.Wait_Press==1&&FAN_F.Pressed ==1){
+     Serial.print("Fan On\0");  
      FAN_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback VI////////////////////  
+   VI_F.Wait_Press = digitalRead(VI); //Press switch Mode
+   if(VI_F.Wait_Press==0 && VI_F.Pressed ==0){
+     Serial.print("Vi Off\0");
+     VI_F.Pressed = 1;
    }
-}  
+   else if(VI_F.Wait_Press==1&&VI_F.Pressed ==1){
+     Serial.print("Vi On\0");  
+     VI_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback VO////////////////////  
+   VO_F.Wait_Press = digitalRead(VO); //Press switch Mode
+   if(VO_F.Wait_Press==0 && VO_F.Pressed ==0){
+     Serial.print("Vo Off\0");
+     VO_F.Pressed = 1;
+   }
+   else if(VO_F.Wait_Press==1&&VO_F.Pressed ==1){
+     Serial.print("Vo On\0");  
+     VO_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback PO////////////////////  
+   PO_F.Wait_Press = digitalRead(PO); //Press switch Mode
+   if(PO_F.Wait_Press==0 && PO_F.Pressed ==0){
+     Serial.print("Po Off\0");
+     PO_F.Pressed = 1;
+   }
+   else if(PO_F.Wait_Press==1&&PO_F.Pressed ==1){
+     Serial.print("Po On\0");  
+     PO_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback PA////////////////////  
+   PA_F.Wait_Press = digitalRead(PA); //Press switch Mode
+   if(PA_F.Wait_Press==0 && PA_F.Pressed ==0){
+     Serial.print("Pa Off\0");
+     PA_F.Pressed = 1;
+   }
+   else if(PA_F.Wait_Press==1&&PA_F.Pressed ==1){
+     Serial.print("Pa On\0");  
+     PA_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback PB////////////////////  
+   PB_F.Wait_Press = digitalRead(PB); //Press switch Mode
+   if(PB_F.Wait_Press==0 && PB_F.Pressed ==0){
+     Serial.print("Pb Off\0");
+     PB_F.Pressed = 1;
+   }
+   else if(PB_F.Wait_Press==1&&PB_F.Pressed ==1){
+     Serial.print("Pb On\0");  
+     PB_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
+////////////////////Read feedback LIGHT////////////////////  
+   LIGHT_F.Wait_Press = digitalRead(LIGHT); //Press switch Mode
+   if(LIGHT_F.Wait_Press==0 && LIGHT_F.Pressed ==0){
+     Serial.print("Light Off\0");
+     LIGHT_F.Pressed = 1;
+   }
+   else if(LIGHT_F.Wait_Press==1&&LIGHT_F.Pressed ==1){
+     Serial.print("Light On\0");  
+     LIGHT_F.Pressed = 0;
+   }  
+/////////////////////////////////////////////////////////////
 
-
+}
 //////////////////////////////// Manager button from app Blynk/////////////////////////
 void System_Manager()
 {
