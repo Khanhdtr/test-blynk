@@ -91,7 +91,7 @@ void setup()
   pinMode(LIGHT, INPUT);
   pinMode(VI, INPUT);
   pinMode(VO, INPUT);
-  pinMode(PA, INPUT);
+  pinMode(PA, INPUT); 
   pinMode(PB, INPUT);
   pinMode(PO, INPUT);
   pinMode(FAN,INPUT);
@@ -160,9 +160,9 @@ void Serial_Manager()
      {
         Serial.print(SYSTEM.Buff_Command);
         if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "1")
-          Mode.Buff_Command = "Auto  ";
-        else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
           Mode.Buff_Command = "Manual";
+        else if(SYSTEM.Buff_Command.substring(3,SYSTEM.Buff_Command.length())== "0")
+          Mode.Buff_Command = "Auto  ";
  
      }
      else if(SYSTEM.Buff_Command.substring(0,3)=="fa:")
